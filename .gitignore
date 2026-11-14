@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+
+# Vector databases / local data storage
+data/chroma_db/
+qdrant_storage/
+
+# IDE / Editor settings
+.vscode/
+.idea/
+.DS_Store
+
+# Node modules (на будущее для фронтенда)
+node_modules/
+dist-ssr/
+*.local

@@ -1,0 +1,22 @@
+{
+  "allowed_domains": [
+    "www.mnau.edu.ua",
+    "pk.mnau.edu.ua",
+    "lib.mnau.edu.ua",
+    "graduate.mnau.edu.ua",
+    "int.mnau.edu.ua",
+    "startup.mnau.edu.ua",
+    "konkurs.mnau.edu.ua"
+  ],
+  "blocked_path_keywords": [
+    "/news/",
+    "/novyny/",
+    "/category/",
+    "/tag/",
+    "/author/",
+    "/page/",
+    "/search/",
+    "wp-content",
+    "wp-includes"
+  ]
+}
