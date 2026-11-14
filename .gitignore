@@ -27,3 +27,8 @@ qdrant_storage/
 node_modules/
 dist-ssr/
 *.local
+
+# Vector database & raw data
+backend/data/
+*.sqlite3
+*.bin

@@ -70,10 +70,7 @@ class AdvancedDocumentParser:
   def process_file(
       self, file_path: str, category: str = "general"
   ) -> List[DocumentChunk]:
-    """Универсальный метод: определяет формат файла (.json, .pdf, .xlsx, .docx, .rtf)
-
-    и запускает нужный парсер.
-    """
+    """Универсальный метод: определяет формат файла и запускает нужный парсер."""
     path = Path(file_path)
     file_extension = path.suffix.lower()
     raw_text = ""
@@ -113,6 +110,7 @@ class AdvancedDocumentParser:
         text=raw_text,
         document_title=document_title,
         category=category,
+        file_path=file_path,
         source_url=source_url,
     )
 
@@ -121,20 +119,24 @@ class AdvancedDocumentParser:
       text: str,
       document_title: str,
       category: str,
+      file_path: str = "",
       source_url: str = "",
       chunk_size: int = 1000,
       overlap: int = 200,
   ) -> List[DocumentChunk]:
-    """Режет сплошной текст на чанки с перекрытием (overlap) и сохраняет метаданные."""
+    """Режет сплошной текст на чанки с перекрытием и генерирует уникальный ID."""
     chunks = []
     start = 0
     text_length = len(text)
+    chunk_index = 0
 
     while start < text_length:
       end = min(start + chunk_size, text_length)
       chunk_text = text[start:end]
 
-      chunk_id = hashlib.md5(chunk_text.encode("utf-8")).hexdigest()
+      # Железобетонная уникальность: путь к файлу + порядковый номер + текст
+      unique_string = f"{file_path}_{chunk_index}_{chunk_text}"
+      chunk_id = hashlib.md5(unique_string.encode("utf-8")).hexdigest()
 
       chunk = DocumentChunk(
           chunk_id=chunk_id,
@@ -148,6 +150,8 @@ class AdvancedDocumentParser:
           },
       )
       chunks.append(chunk)
+      
       start += chunk_size - overlap
+      chunk_index += 1
 
     return chunks
