@@ -130,6 +130,41 @@
       </div>
     </div>
 
+    <!-- Секція оновлення навчального семестру (скидання розкладу) -->
+    <div class="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 rounded-2xl p-5 border border-amber-300/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-start space-x-3.5">
+        <div class="p-3 bg-amber-500/20 text-amber-700 rounded-xl mt-0.5">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-sm font-bold text-amber-950">Оновлення навчального семестру • Очищення старого розкладу</h3>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-200 text-amber-800">Раз на півроку</span>
+          </div>
+          <p class="text-xs text-amber-900/80 mt-1">
+            Кожні півроку в університеті змінюється розклад пар. Ця дія повністю видаляє старий розклад із векторної бази (ChromaDB), реєстру чанків та семантичного кэшу, щоб AI не плутав пари нового семестру зі старими.
+          </p>
+          <div class="flex items-center space-x-2 mt-2">
+            <input type="checkbox" id="del-raw-schedule-files" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500 h-4 w-4">
+            <label for="del-raw-schedule-files" class="text-xs font-medium text-amber-950 cursor-pointer">
+              Також видалити старі файли розкладу з папки документів (щоб не переіндексувалися випадково при синхронізації)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="w-full md:w-auto flex-shrink-0">
+        <button onclick="clearOldSchedule()" id="btn-clear-schedule"
+          class="w-full md:w-auto px-4 py-2.5 rounded-xl font-semibold text-xs text-white bg-amber-600 hover:bg-amber-700 active:bg-amber-800 transition flex items-center justify-center space-x-2 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          <span>Очистити старий розклад</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Секция действий: 3 вкладки/карточки -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -525,6 +560,44 @@
         fetchStats();
       } catch (err) {
         logToTerminal(`❌ Помилка очищення кэшу: ${err.message}`, 'error');
+      }
+    }
+
+    async function clearOldSchedule() {
+      const delFiles = document.getElementById('del-raw-schedule-files').checked;
+      const confirmText = delFiles
+        ? '⚠️ УВАГА! Ви дійсно бажаєте видалити весь старий розклад із бази ChromaDB, реєстру чанків, семантичного кэшу ТА ВИДАЛИТИ старі файли розкладу з папки документів?'
+        : 'Ви дійсно бажаєте очистити старий розклад із бази ChromaDB, реєстру чанків та семантичного кэшу для завантаження пар нового семестру?';
+
+      if (!confirm(confirmText)) return;
+
+      const btn = document.getElementById('btn-clear-schedule');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-1.5">🌀</span> Очищення...`;
+      logToTerminal('🧹 Запущено повне очищення старого розкладу з усіх сховищ...', 'warning');
+
+      try {
+        const url = `/api/admin/schedule/clear?delete_raw_files=${delFiles}`;
+        const res = await fetch(url, { method: 'POST' });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.detail || 'Помилка очищення розкладу');
+
+        logToTerminal(`🎉 ${data.message}`, 'success');
+        logToTerminal(`📊 Результат: видалено векторів: ${data.deleted_from_db}, чанків із реєстру: ${data.deleted_from_json}, скинуто кєш: ${data.cache_cleared}.`, 'info');
+
+        fetchStats();
+        fetchFilesList();
+      } catch (err) {
+        logToTerminal(`❌ Помилка видалення старого розкладу: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          <span>Очистити старий розклад</span>
+        `;
       }
     }
 

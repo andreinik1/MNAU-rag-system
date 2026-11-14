@@ -13,6 +13,7 @@ from app.core.clients import (
 )
 from app.core.config import settings
 from app.models.schemas import (
+    ClearScheduleResponse,
     StatsResponse,
     SyncResponse,
     UploadResponse,
@@ -199,6 +200,27 @@ def clear_cache():
         return {"status": "success", "message": f"Семантичний кєш успішно очищено (видалено {len(ids)} записів)."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Помилка очищення кэшу: {str(e)}")
+
+
+@router.post("/api/admin/schedule/clear", response_model=ClearScheduleResponse)
+def clear_schedule_endpoint(
+    delete_raw_files: bool = Query(
+        False,
+        description="Також видалити старі файли розкладу з папки raw/documents",
+    ),
+):
+    """
+    Повне очищення старого розкладу занять при зміні семестру:
+    - Видаляє всі вектори розкладу з ChromaDB
+    - Видаляє чанки розкладу з processed_chunks.json
+    - Очищає семантичний кєш відповідей
+    - Опціонально видаляє старі вихідні файли розкладу з диска
+    """
+    try:
+        result = vectorizer_service.clear_schedule_data(delete_raw_files=delete_raw_files)
+        return ClearScheduleResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Помилка очищення розкладу: {str(e)}")
 
 
 @router.get("/api/admin/files")

@@ -46,6 +46,16 @@ class SyncResponse(BaseModel):
     duration_seconds: float = 0.0
 
 
+class ClearScheduleResponse(BaseModel):
+    status: str = Field(..., description="'success' | 'error'")
+    message: str
+    deleted_from_db: int = 0
+    deleted_from_json: int = 0
+    cache_cleared: int = 0
+    deleted_files: List[str] = []
+    total_vectors_in_db: int = 0
+
+
 class StatsResponse(BaseModel):
     total_vectors: int
     cached_queries: int
