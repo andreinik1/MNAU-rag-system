@@ -6,7 +6,11 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, Request, Upload
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.core.clients import cache_collection, chroma_client, collection
+from app.core.clients import (
+    chroma_client,
+    get_cache_collection,
+    get_knowledge_collection,
+)
 from app.core.config import settings
 from app.models.schemas import (
     StatsResponse,
@@ -54,8 +58,10 @@ def admin_page(request: Request):
 def get_stats():
     """Получение текущей статистики базы знаний и хранилища."""
     try:
-        total_vectors = collection.count()
-        cached_queries = cache_collection.count()
+        col = get_knowledge_collection()
+        cache_col = get_cache_collection()
+        total_vectors = col.count()
+        cached_queries = cache_col.count()
         processed_files = len(vectorizer_service.get_processed_source_files())
 
         raw_docs = len(
@@ -185,13 +191,12 @@ def scrape_and_index_url(payload: UrlScrapeRequest):
 def clear_cache():
     """Очистка семантического кэша запросов."""
     try:
-        global cache_collection
-        # Удаляем и создаем заново коллекцию кэша
-        chroma_client.delete_collection(name=settings.CACHE_COLLECTION_NAME)
-        cache_collection = chroma_client.get_or_create_collection(
-            name=settings.CACHE_COLLECTION_NAME
-        )
-        return {"status": "success", "message": "Семантичний кєш успішно очищено."}
+        cache_col = get_cache_collection()
+        all_items = cache_col.get()
+        ids = all_items.get("ids", [])
+        if ids:
+            cache_col.delete(ids=ids)
+        return {"status": "success", "message": f"Семантичний кєш успішно очищено (видалено {len(ids)} записів)."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Помилка очищення кэшу: {str(e)}")
 
