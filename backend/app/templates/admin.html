@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="uk" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>МНАУ | Панель Адміністратора RAG</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .terminal-scroll::-webkit-scrollbar { width: 6px; }
+    .terminal-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800">
+
+  <!-- Навигация -->
+  <header class="bg-indigo-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-bold text-xl tracking-wider text-amber-400">
+          М
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">МНАУ • RAG Адмін-панель</h1>
+          <p class="text-xs text-indigo-200">Система керування базою знань та оновленням векторів</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+          Система онлайн
+        </span>
+        <a href="/docs" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-800 hover:bg-indigo-700 text-white transition">
+          Swagger API
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основной контент -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- KPI карточки со статистикой -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Векторная база -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Векторів у базі</p>
+          <h3 id="stat-vectors" class="text-3xl font-extrabold text-indigo-900 mt-2">--</h3>
+          <p class="text-xs text-slate-400 mt-1">ChromaDB Persistent</p>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        </div>
+      </div>
+
+      <!-- Файлов обработано -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Оброблено файлів</p>
+          <h3 id="stat-files" class="text-3xl font-extrabold text-slate-800 mt-2">--</h3>
+          <p class="text-xs text-slate-400 mt-1" id="stat-subfiles">Документів: -- | Текстів: --</p>
+        </div>
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Семантический кэш -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between">
+        <div>
+          <div class="flex items-center space-x-2">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Семантичний кєш</p>
+            <button onclick="clearCache()" title="Очистити кєш" class="text-rose-500 hover:text-rose-700 text-xs font-medium underline">
+              Скинути
+            </button>
+          </div>
+          <h3 id="stat-cache" class="text-3xl font-extrabold text-emerald-600 mt-2">--</h3>
+          <p class="text-xs text-slate-400 mt-1">Збережених запитів</p>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Защита бюджета токенов -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-start justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Економія токенів</p>
+          <h3 class="text-2xl font-extrabold text-amber-600 mt-2">Інкрементальна</h3>
+          <p class="text-xs text-slate-400 mt-1">0 повторних викликів OpenAI</p>
+        </div>
+        <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Секция действий: 3 вкладки/карточки -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Карточка 1: Загрузка файлов -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            </span>
+            <h2 class="text-lg font-bold text-slate-900">Завантаження файлу</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">
+            Завантажуйте офіційні накази, розклади чи правила (PDF, XLSX, DOCX, RTF).
+          </p>
+
+          <form id="upload-form" class="mt-4 space-y-3" onsubmit="handleFileUpload(event)">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Оберіть документ</label>
+              <input type="file" id="file-input" required
+                accept=".pdf,.xlsx,.xls,.docx,.doc,.rtf,.json,.txt"
+                class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-xl p-1" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Категорія</label>
+              <select id="file-category" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="document">Загальний документ (document)</option>
+                <option value="schedule">Розклад занять (schedule)</option>
+                <option value="admissions">Приймальна комісія / Вступ (admissions)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-1">
+              <input type="checkbox" id="file-force" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+              <label for="file-force" class="text-xs text-slate-600 cursor-pointer">
+                Примусово переіндексувати (force)
+              </label>
+            </div>
+
+            <button type="submit" id="btn-upload"
+              class="w-full mt-2 py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-indigo-600 hover:bg-indigo-700 transition flex items-center justify-center space-x-2 shadow-sm">
+              <span>Завантажити та обробити</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Карточка 2: Скрапинг URL -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-lg bg-blue-50 text-blue-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            </span>
+            <h2 class="text-lg font-bold text-slate-900">Додати веб-посилання</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">
+            Скачати сторінку з mnau.edu.ua, очистити текст та додати у базу знань.
+          </p>
+
+          <form id="url-form" class="mt-4 space-y-3" onsubmit="handleUrlScrape(event)">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">URL-посилання</label>
+              <input type="url" id="url-input" required placeholder="https://www.mnau.edu.ua/..."
+                class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Категорія сторінки</label>
+              <select id="url-category" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="web_page">Веб-сторінка (web_page)</option>
+                <option value="admissions">Вступ / Абітурієнту (admissions)</option>
+                <option value="schedule">Розклад (schedule)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-1">
+              <input type="checkbox" id="url-force" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+              <label for="url-force" class="text-xs text-slate-600 cursor-pointer">
+                Примусово оновити, якщо вже є
+              </label>
+            </div>
+
+            <button type="submit" id="btn-scrape"
+              class="w-full mt-2 py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center space-x-2 shadow-sm">
+              <span>Скрапити та індексувати</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Карточка 3: Полная синхронизация -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </span>
+            <h2 class="text-lg font-bold text-slate-900">Синхронізація сховища</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-2">
+            Сканує директорії <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-700">raw/documents</code> та <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-700">raw/texts</code>. Знаходить нові файли та додає відсутні вектори в ChromaDB.
+          </p>
+
+          <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-600 space-y-1">
+            <div class="flex items-center space-x-1.5 font-medium text-slate-700">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <span>Повна перевірка без витрат на старі дані</span>
+            </div>
+            <p>Всі вже індексовані чанки ігноруються автоматично за допомогою <code class="text-slate-800 font-semibold">get(include=[])</code>.</p>
+          </div>
+        </div>
+
+        <button onclick="triggerSync()" id="btn-sync"
+          class="w-full mt-4 py-2.5 px-4 rounded-xl font-semibold text-xs text-white bg-slate-800 hover:bg-slate-900 transition flex items-center justify-center space-x-2 shadow-sm">
+          <span>Запустити синхронізацію</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Интерактивный терминал / лог выполнения в реальном времени -->
+    <div class="bg-slate-900 rounded-2xl p-5 shadow-lg border border-slate-800 text-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+          <div class="flex space-x-1.5">
+            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+          </div>
+          <span class="text-xs font-mono text-slate-400 pl-2">Термінал операцій • Live Status</span>
+        </div>
+        <button onclick="clearTerminal()" class="text-xs font-mono text-slate-500 hover:text-slate-300">
+          Очистити лог
+        </button>
+      </div>
+      <div id="terminal" class="terminal-scroll font-mono text-xs mt-3 h-44 overflow-y-auto space-y-1 text-slate-300">
+        <div class="text-slate-500">[System] Адмін-панель готова. Очікування дій...</div>
+      </div>
+    </div>
+
+    <!-- Таблица недавно обработанных файлов -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Оброблено файлів у базі знань</h3>
+          <p class="text-xs text-slate-500">Огляд джерел із processed_chunks.json</p>
+        </div>
+        <button onclick="fetchFilesList()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center space-x-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          <span>Оновити таблицю</span>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto max-h-96">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold sticky top-0 border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-4">Файл / Джерело</th>
+              <th class="py-3 px-4">Категорія</th>
+              <th class="py-3 px-4">Чанків</th>
+              <th class="py-3 px-4">Посилання</th>
+            </tr>
+          </thead>
+          <tbody id="files-table-body" class="divide-y divide-slate-100 text-slate-700">
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-400">Завантаження списку...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-auto">
+    МНАУ RAG Assistant • FastAPI + ChromaDB + OpenAI text-embedding-3-small & gpt-4o-mini
+  </footer>
+
+  <!-- Скрипты взаимодействия -->
+  <script>
+    function logToTerminal(message, type = 'info') {
+      const term = document.getElementById('terminal');
+      const time = new Date().toLocaleTimeString();
+      let colorClass = 'text-slate-300';
+      if (type === 'success') colorClass = 'text-emerald-400 font-semibold';
+      if (type === 'warning') colorClass = 'text-amber-400';
+      if (type === 'error') colorClass = 'text-rose-400 font-semibold';
+
+      const line = document.createElement('div');
+      line.className = colorClass;
+      line.innerHTML = `<span class="text-slate-600">[${time}]</span> ${message}`;
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function clearTerminal() {
+      document.getElementById('terminal').innerHTML = '<div class="text-slate-500">[System] Лог очищено.</div>';
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        if (!res.ok) throw new Error('Помилка сервера');
+        const data = await res.json();
+
+        document.getElementById('stat-vectors').textContent = data.total_vectors.toLocaleString('uk-UA');
+        document.getElementById('stat-files').textContent = data.processed_files_count.toLocaleString('uk-UA');
+        document.getElementById('stat-cache').textContent = data.cached_queries.toLocaleString('uk-UA');
+        document.getElementById('stat-subfiles').textContent = `Документів: ${data.raw_documents_count} | Текстів: ${data.raw_texts_count}`;
+      } catch (err) {
+        logToTerminal(`⚠️ Помилка завантаження статистики: ${err.message}`, 'error');
+      }
+    }
+
+    async function fetchFilesList() {
+      const tbody = document.getElementById('files-table-body');
+      try {
+        const res = await fetch('/api/admin/files?limit=100');
+        if (!res.ok) throw new Error('Помилка сервера');
+        const data = await res.json();
+
+        if (!data.files || data.files.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-slate-400">Файлів не знайдено</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = data.files.map(f => {
+          const urlLink = f.source_url ? `<a href="${f.source_url}" target="_blank" class="text-indigo-600 hover:underline truncate max-w-xs block">${f.source_url}</a>` : '<span class="text-slate-300">—</span>';
+          return `
+            <tr class="hover:bg-slate-50/70 transition">
+              <td class="py-2.5 px-4 font-medium text-slate-900">${f.source_file}</td>
+              <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">${f.category}</span></td>
+              <td class="py-2.5 px-4 font-semibold text-indigo-700">${f.chunk_count}</td>
+              <td class="py-2.5 px-4">${urlLink}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-rose-500">Помилка завантаження: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function handleFileUpload(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('file-input');
+      const category = document.getElementById('file-category').value;
+      const force = document.getElementById('file-force').checked;
+      const btn = document.getElementById('btn-upload');
+
+      if (!fileInput.files.length) return;
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', category);
+      formData.append('force', force);
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">🌀</span> Обробка...`;
+      logToTerminal(`🚀 Початок завантаження файлу "${file.name}" (Розмір: ${(file.size / 1024).toFixed(1)} КБ)...`, 'info');
+
+      try {
+        const res = await fetch('/api/admin/upload-file', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || 'Помилка завантаження');
+        }
+
+        if (data.status === 'already_processed') {
+          logToTerminal(`⚡ [SKIPPED] ${data.message}`, 'warning');
+        } else {
+          logToTerminal(`✅ [SUCCESS] ${data.message}`, 'success');
+          logToTerminal(`📊 Статистика: створено чанків: ${data.chunks_created}, нових векторів: ${data.chunks_indexed}, дублікатів пропущено: ${data.chunks_skipped}.`, 'info');
+        }
+
+        fileInput.value = '';
+        fetchStats();
+        fetchFilesList();
+      } catch (err) {
+        logToTerminal(`❌ Помилка: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Завантажити та обробити</span>`;
+      }
+    }
+
+    async function handleUrlScrape(e) {
+      e.preventDefault();
+      const urlInput = document.getElementById('url-input');
+      const category = document.getElementById('url-category').value;
+      const force = document.getElementById('url-force').checked;
+      const btn = document.getElementById('btn-scrape');
+
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">🌀</span> Скрапинг...`;
+      logToTerminal(`🌐 Скрапинг URL: ${url}...`, 'info');
+
+      try {
+        const res = await fetch('/api/admin/scrape-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, category, force })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.detail || 'Помилка');
+
+        if (data.status === 'already_processed') {
+          logToTerminal(`⚡ [SKIPPED] ${data.message}`, 'warning');
+        } else {
+          logToTerminal(`✅ [SUCCESS] ${data.message}`, 'success');
+        }
+
+        urlInput.value = '';
+        fetchStats();
+        fetchFilesList();
+      } catch (err) {
+        logToTerminal(`❌ Помилка скрапингу URL: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Скрапити та індексувати</span>`;
+      }
+    }
+
+    async function triggerSync() {
+      const btn = document.getElementById('btn-sync');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-spin mr-2">🌀</span> Синхронізація...`;
+      logToTerminal(`🔄 Запущено сканування сховища raw/ та перевірку ChromaDB...`, 'info');
+
+      try {
+        const res = await fetch('/api/admin/sync', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Помилка синхронізації');
+
+        logToTerminal(`🎉 ${data.message}`, 'success');
+        fetchStats();
+        fetchFilesList();
+      } catch (err) {
+        logToTerminal(`❌ Помилка синхронізації: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Запустити синхронізацію</span>`;
+      }
+    }
+
+    async function clearCache() {
+      if (!confirm('Ви дійсно бажаєте очистити семантичний кєш?')) return;
+      logToTerminal('🧹 Очищення семантичного кэшу...', 'info');
+      try {
+        const res = await fetch('/api/admin/cache/clear', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Помилка');
+        logToTerminal(`✅ ${data.message}`, 'success');
+        fetchStats();
+      } catch (err) {
+        logToTerminal(`❌ Помилка очищення кэшу: ${err.message}`, 'error');
+      }
+    }
+
+    // Инициализация при загрузке страницы
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchStats();
+      fetchFilesList();
+      logToTerminal('📡 Підключено до FastAPI серверу МНАУ RAG API.', 'info');
+    });
+  </script>
+</body>
+</html>
